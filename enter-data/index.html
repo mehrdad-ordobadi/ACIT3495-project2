@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enter Data</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        input, button {
+            margin: 10px 0;
+            padding: 5px;
+        }
+        #message {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Enter Data</h1>
+    <form id="dataForm">
+        <input type="text" id="userid" placeholder="User ID" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <input type="number" id="value" placeholder="Value" step="0.01" required>
+        <button type="submit">Submit</button>
+    </form>
+    <div id="message"></div>
+
+    <script>
+        document.getElementById('dataForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const userid = document.getElementById('userid').value;
+            const password = document.getElementById('password').value;
+            const value = parseFloat(document.getElementById('value').value);
+
+            try {
+                const response = await fetch('/enter-data', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ userid, password, value }),
+                });
+
+                const data = await response.json();
+                document.getElementById('message').textContent = data.message || data.error;
+            } catch (error) {
+                document.getElementById('message').textContent = 'An error occurred';
+            }
+        });
+    </script>
+</body>
+</html>
+

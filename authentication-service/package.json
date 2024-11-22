@@ -1,0 +1,9 @@
+{
+    "name": "authentication-service",
+    "version": "1.0.0",
+    "main": "auth_service.js",
+    "dependencies": {
+      "express": "^4.17.1",
+      "body-parser": "^1.19.0"
+    }
+  }

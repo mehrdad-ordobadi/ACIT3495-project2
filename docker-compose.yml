@@ -1,0 +1,71 @@
+services:
+  enter-data:
+    build: ./enter-data
+    ports:
+      - "${ENTER_DATA_PORT:-8001}:${ENTER_DATA_PORT:-8001}"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      authentication-service:
+        condition: service_started
+    env_file:
+      - .env.enter-data
+
+  show-results:
+    build: ./show-results
+    ports:
+      - "${SHOW_RESULTS_PORT:-8002}:${SHOW_RESULTS_PORT:-8002}"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      authentication-service:
+        condition: service_started
+    env_file:
+      - .env.show-results
+
+  authentication-service:
+    build: ./authentication-service
+    ports:
+      - "${AUTH_PORT:-8000}:${AUTH_PORT:-8000}"
+    env_file:
+      - .env.authentication-service
+
+  analytics-service:
+    build: ./analytics-service
+    depends_on:
+      mysql:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    env_file:
+      - .env.analytics-service
+
+  mysql:
+    image: mysql:8.0
+    env_file:
+      - .env.mysql
+    volumes:
+      - ./mysql/init:/docker-entrypoint-initdb.d
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongodb:
+    image: mongo:latest
+    env_file:
+      - .env.mongodb
+    volumes:
+      - ./mongodb/init.js:/docker-entrypoint-initdb.d/init.js
+      - mongodb_data:/data/db
+    healthcheck:
+      test: mongosh --eval 'db.runCommand("ping").ok' --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mysql_data:
+  mongodb_data:

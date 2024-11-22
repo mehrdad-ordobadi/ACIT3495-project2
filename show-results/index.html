@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Show Results</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        input, button {
+            margin: 10px 0;
+            padding: 5px;
+        }
+        #results {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Show Results</h1>
+    <form id="resultsForm">
+        <input type="text" id="userid" placeholder="User ID" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <button type="submit">Get Results</button>
+    </form>
+    <div id="results"></div>
+
+    <script>
+        document.getElementById('resultsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const userid = document.getElementById('userid').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('/results', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ userid, password }),
+                });
+
+                const data = await response.json();
+                if (Array.isArray(data)) {
+                    const resultsHtml = data.map(result => `
+                        <h3>User: ${result.userid}</h3>
+                        <p>Max: ${result.max}</p>
+                        <p>Min: ${result.min}</p>
+                        <p>Average: ${result.avg.toFixed(2)}</p>
+                        <p>Count: ${result.count}</p>
+                    `).join('');
+                    document.getElementById('results').innerHTML = resultsHtml;
+                } else {
+                    document.getElementById('results').textContent = data.error || 'No results found';
+                }
+            } catch (error) {
+                document.getElementById('results').textContent = 'An error occurred';
+            }
+        });
+    </script>
+</body>
+</html>
+
