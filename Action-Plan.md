@@ -41,27 +41,45 @@ module "node_groups" {
 ├── k8s/
 │   ├── base/
 │   │   ├── configmaps/
+│   │   │   ├── mysql-config.yaml          # MySQL init scripts and config
+│   │   │   ├── mongodb-config.yaml        # MongoDB init scripts and config
+│   │   │   └── app-config.yaml            # Application configurations
 │   │   ├── secrets/
+│   │   │   ├── mysql-secrets.yaml         # MySQL credentials
+│   │   │   └── mongodb-secrets.yaml       # MongoDB credentials
 │   │   ├── storage/
-│   │   │   ├── storage-class.yaml
-│   │   │   └── persistent-volume-claims.yaml
-│   │   ├── databases/
-│   │   │   ├── mysql-deployment.yaml
-│   │   │   ├── mysql-service.yaml
-│   │   │   ├── mongodb-deployment.yaml
-│   │   │   └── mongodb-service.yaml
+│   │   │   └── storage-class.yaml         # gp2 storage class config
+│   │   ├── databasesa/
+│   │   │   ├── mysql/
+│   │   │   │   ├── statefulset.yaml      # Changed from deployment
+│   │   │   │   └── service.yaml          # Headless service for StatefulSet
+│   │   │   └── mongodb/
+│   │   │       ├── statefulset.yaml      # Changed from deployment
+│   │   │       └── service.yaml          # Headless service for StatefulSet
 │   │   └── applications/
 │   │       ├── auth-service/
+│   │       │   ├── deployment.yaml
+│   │       │   ├── service.yaml
+│   │       │   └── hpa.yaml
 │   │       ├── analytics-service/
+│   │       │   ├── deployment.yaml
+│   │       │   ├── service.yaml
+│   │       │   └── hpa.yaml
 │   │       ├── enter-data-service/
+│   │       │   ├── deployment.yaml
+│   │       │   ├── service.yaml
+│   │       │   └── hpa.yaml
 │   │       └── show-results-service/
+│   │           ├── deployment.yaml
+│   │           ├── service.yaml
+│   │           └── hpa.yaml
 │   └── dev/
 │       └── kustomization.yaml
 ├── terraform/
-│   ├── main.tf
-│   ├── variables.tf
-│   ├── outputs.tf
-│   └── versions.tf
+    ├── main.tf
+    ├── variables.tf
+    ├── outputs.tf
+    └── versions.tf
 
 ```
 ## 3. Service Code Modifications
