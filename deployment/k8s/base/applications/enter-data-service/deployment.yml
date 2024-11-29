@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: enter-data-service
+  labels:
+    app: enter-data-service
+    component: frontend
+    environment: development
+spec:
+replicas: 1
+selector:
+  matchLabels:
+    app: enter-data-service
+template:
+  metadata:
+    labels:
+      app: enter-data-service
+  spec:
+    containers:
+    - name: enter-data-service
+      image: mehrdadfordobadi/enter-data-service:latest
+      ports:
+      - containerPort: 8001 # must match target port for the service
+      resources:
+        requests:
+          cpu: "50m"
+          memory: "64Mi"
+        limits:
+          cpu: "100m"
+          memory: "128Mi"
+      livenessProbe:
+        httpGet:
+        path: /health
+        port: 8001
+        initialDelaySeconds: 15
+        periodSeconds: 10
+      readinessProbe:
+        httpGet:
+        path: /health/ready
+        port: 8001
+        initialDelaySeconds: 5
+        periodSeconds: 10
