@@ -21,3 +21,4 @@ jobs:
 
         - name: List the buckets
           run: aws s3 ls
+
