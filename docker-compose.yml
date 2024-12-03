@@ -1,95 +1,137 @@
-services:
-  enter-data:
-    build: ./enter-data
-    ports:
-      - "${ENTER_DATA_PORT:-8001}:${ENTER_DATA_PORT:-8001}"
-    depends_on:
-      mysql:
-        condition: service_healthy
-      authentication-service:
-        condition: service_healthy
-    env_file:
-      - .env.enter-data
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:${ENTER_DATA_PORT:-8001}/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+version: '3.8'
 
-  show-results:
-    build: ./show-results
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: datadb
+      MYSQL_USER: writer
+      MYSQL_PASSWORD: writerpassword
+      MYSQL_USER_READER: reader
+      MYSQL_PASSWORD_READER: readerpassword
+      MYSQL_USER_WRITER: writer
+      MYSQL_PASSWORD_WRITER: writerpassword
     ports:
-      - "${SHOW_RESULTS_PORT:-8002}:${SHOW_RESULTS_PORT:-8002}"
-    depends_on:
-      mongodb:
-        condition: service_healthy
-      authentication-service:
-        condition: service_healthy
-    env_file:
-      - .env.show-results
+      - "3306:3306"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:${SHOW_RESULTS_PORT:-8002}/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "--password=$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql/init:/docker-entrypoint-initdb.d
+    command: bash -c "chmod +x /docker-entrypoint-initdb.d/03-create-users.sh && docker-entrypoint.sh mysqld"
+
+  mongodb:
+    image: mongo:latest
+    command: ["mongod", "--auth", "--bind_ip_all"]
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=rootpassword
+      - MONGO_INITDB_DATABASE=analyticsdb
+      - MONGO_USER_READER=reader
+      - MONGO_PASSWORD_READER=readerpassword
+      - MONGO_USER_WRITER=writer
+      - MONGO_PASSWORD_WRITER=writerpassword
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./mongodb/init.js:/docker-entrypoint-initdb.d/init.js:ro
+      - mongo_data:/data/db
+    healthcheck:
+      test: mongosh --eval "db.adminCommand('ping')"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   authentication-service:
-    build: ./authentication-service
+    build:
+      context: ./authentication-service
+    environment:
+      AUTH_PORT: 8000
     ports:
-      - "${AUTH_PORT:-8000}:${AUTH_PORT:-8000}"
-    env_file:
-      - .env.authentication-service
+      - "8000:8000"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:${AUTH_PORT:-8000}/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 20s
 
   analytics-service:
-    build: ./analytics-service
+    build:
+      context: ./analytics-service
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_DATABASE: datadb
+      MYSQL_USER: reader
+      MYSQL_PASSWORD: readerpassword
+      MONGO_URI: mongodb://writer:writerpassword@mongodb:27017/analyticsdb?authSource=analyticsdb
+    ports:
+      - "8080:8080"
     depends_on:
       mysql:
         condition: service_healthy
       mongodb:
         condition: service_healthy
-    env_file:
-      - .env.analytics-service
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 20s
 
-  mysql:
-    image: mysql:8.0
-    env_file:
-      - .env.mysql
-    volumes:
-      - ./mysql/init:/docker-entrypoint-initdb.d
-      - mysql_data:/var/lib/mysql
+  enter-data:
+    build:
+      context: ./enter-data
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_DATABASE: datadb
+      MYSQL_USER: writer
+      MYSQL_PASSWORD: writerpassword
+      AUTH_SERVICE_HOST: authentication-service
+      AUTH_SERVICE_PORT: 8000
+      ENTER_DATA_PORT: 8001
+    ports:
+      - "8001:8001"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      authentication-service:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
 
-  mongodb:
-    image: mongo:latest
-    env_file:
-      - .env.mongodb
-    volumes:
-      - ./mongodb/init.js:/docker-entrypoint-initdb.d/init.js
-      - mongodb_data:/data/db
+  show-results:
+    build:
+      context: ./show-results
+    environment:
+      MONGO_URI: mongodb://reader:readerpassword@mongodb:27017/analyticsdb?authSource=analyticsdb
+      AUTH_SERVICE_HOST: authentication-service
+      AUTH_SERVICE_PORT: 8000
+      SHOW_RESULTS_PORT: 8002
+    ports:
+      - "8002:8002"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      authentication-service:
+        condition: service_healthy
     healthcheck:
-      test: mongosh --eval 'db.runCommand("ping").ok' --quiet
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
 
 volumes:
   mysql_data:
-  mongodb_data:
+  mongo_data:
