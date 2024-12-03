@@ -13,6 +13,10 @@ resource "helm_release" "aws_load_balancer_controller" {
     name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
     value = aws_iam_role.alb_controller.arn
   }
+  depends_on = [
+    aws_eks_node_group.main,
+    aws_eks_addon.coredns
+  ]
 }
 
 resource "helm_release" "metrics_server" {
@@ -25,6 +29,10 @@ resource "helm_release" "metrics_server" {
     name  = "args"
     value = "{--kubelet-insecure-tls}"
   }
+  depends_on = [
+    aws_eks_node_group.main,
+    aws_eks_addon.coredns
+  ]
 }
 
 # Secrets Store CSI Driver via Helm
@@ -33,6 +41,10 @@ resource "helm_release" "secrets_store_csi" {
   repository = "https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts"
   chart      = "secrets-store-csi-driver"
   namespace  = "kube-system"
+  depends_on = [
+    aws_eks_node_group.main,
+    aws_eks_addon.coredns
+  ]
 }
 
 # AWS Provider for Secrets Store CSI Driver
@@ -42,6 +54,10 @@ resource "helm_release" "secrets_store_provider_aws" {
   chart      = "secrets-store-csi-driver-provider-aws"
   namespace  = "kube-system"
 
-  depends_on = [helm_release.secrets_store_csi]
+  depends_on = [
+    helm_release.secrets_store_csi,
+    aws_eks_node_group.main,
+    aws_eks_addon.coredns
+  ]
 }
 

@@ -5,7 +5,7 @@ resource "aws_eks_cluster" "main" {
   version  = var.cluster_version
 
   vpc_config {
-    subnet_ids              = var.subnet_ids
+    subnet_ids              = concat(var.public_subnet_ids, var.private_subnet_ids)
     endpoint_private_access = true
     endpoint_public_access  = true
     security_group_ids      = [aws_security_group.cluster.id]
@@ -33,6 +33,12 @@ resource "aws_eks_node_group" "main" {
     id      = aws_launch_template.node.id
     version = aws_launch_template.node.latest_version
   }
+
+  # timeouts {
+  #   create = "15m" 
+  #   update = "15m"
+  #   delete = "15m"
+  # }
 
   depends_on = [
     aws_iam_role_policy_attachment.node_policy,

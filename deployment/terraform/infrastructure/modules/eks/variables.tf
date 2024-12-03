@@ -5,12 +5,12 @@ variable "project" {
 variable "region" {
   description = "The region to deploy the resources"
   type        = string
-  
+
 }
 variable "vpc_id" {
   description = "The ID of the VPC"
   type        = string
-  
+
 }
 variable "cluster_version" {
   description = "The version of the EKS cluster"
@@ -26,18 +26,23 @@ variable "private_subnet_ids" {
   description = "The IDs of the private subnets to attach to the EKS node group"
   type        = list(string)
 }
+variable "public_subnet_ids" {
+  description = "The IDs of the public subnets to attach to the EKS node group"
+  type        = list(string)
+
+}
 variable "desired_size" {
   description = "The desired number of worker nodes"
   type        = number
-  default = 1
+  default     = 1
 }
 variable "max_size" {
   description = "The maximum number of worker nodes"
   type        = number
-  default = 2
+  default     = 2
 }
 variable "min_size" {
   description = "The minimum number of worker nodes"
   type        = number
-  default = 0
+  default     = 0
 }

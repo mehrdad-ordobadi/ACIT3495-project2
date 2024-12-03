@@ -16,9 +16,34 @@ template:
     labels:
       app: enter-data-service
   spec:
+    serviceAccountName: database-secrets-sa
+    volumes:
+      - name: secrets-store
+        csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: "database-secrets"
     containers:
     - name: enter-data-service
       image: mehrdadfordobadi/enter-data-service:latest
+      volumeMounts:
+      - name: secrets-store
+        mountPath: "/mnt/secrets-store"
+        readOnly: true
+      env:
+      - name: MYSQL_HOST
+        value: "mysql.default.svc.cluster.local"
+      - name: MYSQL_USER
+        valueFrom:
+          secretKeyRef:
+            name: mysql-secrets
+            key: MYSQL_USER_WRITER
+      - name: MYSQL_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: mysql-secrets
+            key: MYSQL_PASSWORD_WRITER
       ports:
       - containerPort: 8001 # must match target port for the service
       resources:

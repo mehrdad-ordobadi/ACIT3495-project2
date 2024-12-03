@@ -60,3 +60,23 @@ resource "aws_security_group_rule" "node_ingress_lb" {
   cidr_blocks       = ["0.0.0.0/0"]
   security_group_id = aws_security_group.node.id
 }
+
+# Allow HTTPS from control plane to nodes
+resource "aws_security_group_rule" "node_ingress_cluster_https" {
+  type                     = "ingress"
+  from_port                = 443
+  to_port                  = 443
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.cluster.id
+  security_group_id        = aws_security_group.node.id
+}
+
+# Allow all traffic between nodes
+resource "aws_security_group_rule" "node_ingress_cluster_kubelet" {
+  type                     = "ingress"
+  from_port                = 10250
+  to_port                  = 10250
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.cluster.id
+  security_group_id        = aws_security_group.node.id
+}

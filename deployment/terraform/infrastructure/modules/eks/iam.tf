@@ -58,6 +58,11 @@ resource "aws_iam_role_policy_attachment" "registry_policy" {
   role       = aws_iam_role.node.name
 }
 
+resource "aws_iam_role_policy_attachment" "node_ssm" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+  role       = aws_iam_role.node.name
+}
+
 # alb_controller_iam
 
 data "tls_certificate" "eks" {
@@ -84,7 +89,7 @@ resource "aws_iam_role" "alb_controller" {
         Action = "sts:AssumeRoleWithWebIdentity"
         Condition = {
           StringEquals = {
-            "${aws_iam_openid_connect_provider.main.url}:sub": "system:serviceaccount:kube-system:aws-load-balancer-controller"
+            "${aws_iam_openid_connect_provider.main.url}:sub" : "system:serviceaccount:kube-system:aws-load-balancer-controller"
           }
         }
       }
@@ -135,7 +140,7 @@ resource "aws_iam_role" "ebs_csi" {
       Action = "sts:AssumeRoleWithWebIdentity"
       Condition = {
         StringEquals = {
-          "${aws_iam_openid_connect_provider.main.url}:sub": "system:serviceaccount:kube-system:ebs-csi-controller-sa"
+          "${aws_iam_openid_connect_provider.main.url}:sub" : "system:serviceaccount:kube-system:ebs-csi-controller-sa"
         }
       }
     }]
@@ -161,7 +166,7 @@ resource "aws_iam_role" "secrets_csi" {
       Action = "sts:AssumeRoleWithWebIdentity"
       Condition = {
         StringEquals = {
-          "${aws_iam_openid_connect_provider.main.url}:sub": "system:serviceaccount:kube-system:secrets-store-csi-driver"
+          "${aws_iam_openid_connect_provider.main.url}:sub" : "system:serviceaccount:kube-system:secrets-store-csi-driver"
         }
       }
     }]

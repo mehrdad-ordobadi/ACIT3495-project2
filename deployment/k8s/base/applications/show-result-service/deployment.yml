@@ -16,9 +16,31 @@ spec:
       labels:
         app: show-result-service
     spec:
+      serviceAccountName: database-secrets-sa
+      volumes:
+      - name: secrets-store
+        csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: "database-secrets"
       containers:
       - name: show-result-service
         image: mehrdadfordobadi/show-result-service:latest
+        env:
+          # MongoDB connection (using service discovery)
+        - name: MONGO_URI
+          value: "mongodb://$(MONGO_USER_READER):$(MONGO_PASSWORD_READER)@mongodb.default.svc.cluster.local:27017/analyticsdb"
+        - name: MONGO_USER_READER
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secrets
+              key: MONGO_USER_READER
+        - name: MONGO_PASSWORD_READER
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secrets
+              key: MONGO_PASSWORD_READER
         ports:
         - containerPort: 8002
         resources:
