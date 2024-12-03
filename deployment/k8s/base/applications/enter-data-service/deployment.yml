@@ -44,6 +44,10 @@ template:
           secretKeyRef:
             name: mysql-secrets
             key: MYSQL_PASSWORD_WRITER
+      - name: AUTH_SERVICE_HOST
+        value: http://auth-service.default.svc.cluster.local:8000
+      - name: AUTH_SERVICE_PORT
+        value: "8000"
       ports:
       - containerPort: 8001 # must match target port for the service
       resources:
