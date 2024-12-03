@@ -57,6 +57,8 @@ services:
         condition: service_healthy
     env_file:
       - .env.analytics-service
+    ports:
+      - "${ANALYTICS_PORT:-8080}:${ANALYTICS_PORT:-8080}"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s

@@ -25,6 +25,7 @@ def health_check():
         mysql_conn = get_mysql_connection()
         cursor = mysql_conn.cursor()
         cursor.execute("SELECT 1")
+        cursor.fetchall()
         cursor.close()
         mysql_conn.close()
 
