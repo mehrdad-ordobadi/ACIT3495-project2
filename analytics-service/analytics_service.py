@@ -37,7 +37,7 @@ def ready_check():
         mysql_conn = get_mysql_connection()
         cursor = mysql_conn.cursor()
         cursor.execute("SELECT 1")
-        cursor.fetchone()
+        cursor.fetchall()  # Using fetchall() as it's more thorough
         cursor.close()
         mysql_conn.close()
         status["checks"]["mysql"] = "connected"

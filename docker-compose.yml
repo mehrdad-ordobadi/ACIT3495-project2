@@ -71,8 +71,10 @@ services:
       MYSQL_USER: reader
       MYSQL_PASSWORD: readerpassword
       MONGO_URI: mongodb://writer:writerpassword@mongodb:27017/analyticsdb?authSource=analyticsdb
+    env_file:
+      - .env.analytics-service
     ports:
-      - "8080:8080"
+      - "${ANALYTICS_PORT:-8080}:${ANALYTICS_PORT:-8080}"
     depends_on:
       mysql:
         condition: service_healthy
