@@ -19,6 +19,24 @@ const dbConfig = {
     database: process.env.MYSQL_DATABASE || "datadb"
 };
 
+// Health check endpoint
+app.get('/health', async (req, res) => {
+    try {
+        // Check MySQL connection
+        const connection = await mysql.createConnection(dbConfig);
+        await connection.execute('SELECT 1');
+        await connection.end();
+
+        // Check Auth Service connection
+        await axios.get(`http://${process.env.AUTH_SERVICE_HOST || 'authentication-service'}:${process.env.AUTH_SERVICE_PORT || '8000'}/health`);
+
+        res.status(200).json({ status: 'healthy' });
+    } catch (error) {
+        console.error('Health check failed:', error);
+        res.status(503).json({ status: 'unhealthy', error: error.message });
+    }
+});
+
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });

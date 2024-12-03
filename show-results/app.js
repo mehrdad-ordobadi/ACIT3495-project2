@@ -13,6 +13,25 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const mongoUri = process.env.MONGO_URI || 'mongodb://reader:readerpassword@mongodb:27017/analyticsdb';
 
+// Health check endpoint
+app.get('/health', async (req, res) => {
+    try {
+        // Check MongoDB connection
+        const client = new MongoClient(mongoUri);
+        await client.connect();
+        await client.db('analyticsdb').command({ ping: 1 });
+        await client.close();
+
+        // Check Auth Service connection
+        await axios.get(`http://${process.env.AUTH_SERVICE_HOST || 'authentication-service'}:${process.env.AUTH_SERVICE_PORT || '8000'}/health`);
+
+        res.status(200).json({ status: 'healthy' });
+    } catch (error) {
+        console.error('Health check failed:', error);
+        res.status(503).json({ status: 'unhealthy', error: error.message });
+    }
+});
+
 app.post('/results', async (req, res) => {
     const { userid, password } = req.body;
     if (!userid || !password) {

@@ -1,8 +1,11 @@
 import os
 import time
 import mysql.connector
+from flask import Flask, jsonify
 from pymongo import MongoClient
 from mysql.connector import Error
+
+app = Flask(__name__)
 
 def get_mysql_connection():
     return mysql.connector.connect(
@@ -14,6 +17,25 @@ def get_mysql_connection():
 
 def get_mongodb_connection():
     return MongoClient(os.environ.get('MONGO_URI', 'mongodb://writer:writerpassword@mongodb:27017/analyticsdb'))
+
+@app.route('/health')
+def health_check():
+    try:
+        # Check MySQL connection
+        mysql_conn = get_mysql_connection()
+        cursor = mysql_conn.cursor()
+        cursor.execute("SELECT 1")
+        cursor.close()
+        mysql_conn.close()
+
+        # Check MongoDB connection
+        mongo_client = get_mongodb_connection()
+        mongo_client.admin.command('ping')
+        mongo_client.close()
+
+        return jsonify({"status": "healthy"}), 200
+    except Exception as e:
+        return jsonify({"status": "unhealthy", "error": str(e)}), 503
 
 def calculate_analytics():
     mysql_conn = get_mysql_connection()
@@ -54,6 +76,11 @@ def calculate_analytics():
     mongo_client.close()
 
 if __name__ == "__main__":
+    # Start the Flask app in a separate thread
+    from threading import Thread
+    Thread(target=lambda: app.run(host='0.0.0.0', port=8080)).start()
+    
+    # Run the analytics calculation loop
     while True:
         try:
             calculate_analytics()

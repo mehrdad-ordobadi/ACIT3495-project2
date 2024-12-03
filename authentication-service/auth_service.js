@@ -12,6 +12,11 @@ const users = {
   user2: "password2",
 };
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'healthy' });
+});
+
 app.post("/validate", (req, res) => {
   const { userid, password } = req.body;
 
