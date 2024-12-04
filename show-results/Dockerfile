@@ -7,5 +7,6 @@ RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 COPY package.json ./
 RUN npm install
 COPY app.js .
-COPY index.html .
+RUN mkdir public
+COPY index.html ./public/
 CMD ["node", "app.js"]

@@ -13,7 +13,7 @@ resource "aws_launch_template" "node" {
     }
   }
 
-  instance_type = "t3.medium"
+  instance_type = "t3.xlarge"
 
   metadata_options {
     http_endpoint               = "enabled"

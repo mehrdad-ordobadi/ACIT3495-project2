@@ -1,4 +1,4 @@
-# cluster.tf
+# main.tf
 resource "aws_eks_cluster" "main" {
   name     = "${var.project}-cluster"
   role_arn = aws_iam_role.cluster.arn

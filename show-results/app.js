@@ -9,9 +9,25 @@ const port = process.env.SHOW_RESULTS_PORT || 8002;
 
 app.use(express.json());
 app.use(cors());
-app.use(express.static(path.join(__dirname, 'public')));
 
-const mongoUri = process.env.MONGO_URI || 'mongodb://reader:readerpassword@mongodb:27017/analyticsdb?authSource=analyticsdb';
+// Serve static files at both root and /results
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/results', express.static(path.join(__dirname, 'public')));
+
+const mongoHost = process.env.MONGO_HOST || 'mongodb.default.svc.cluster.local';
+const mongoUser = process.env.MONGO_USER_READER || 'reader';
+const mongoPassword = process.env.MONGO_PASSWORD_READER || 'readerpassword';
+const mongoDatabase = 'analyticsdb';
+const mongoUri = `mongodb://${mongoUser}:${mongoPassword}@${mongoHost}:27017/${mongoDatabase}?authSource=${mongoDatabase}`;
+
+// Serve index.html at both root and /results
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/results', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // Basic health check endpoint (liveness probe)
 app.get('/health', (req, res) => {
@@ -75,6 +91,11 @@ app.get('/service-info', (req, res) => {
             },
             {
                 path: '/results',
+                method: 'GET',
+                description: 'Results frontend'
+            },
+            {
+                path: '/results',
                 method: 'POST',
                 description: 'Get analytics results for a user',
                 requestBody: {
@@ -118,18 +139,37 @@ app.post('/results', async (req, res) => {
         }
 
         // Retrieve results from MongoDB
+        console.log('Connecting to MongoDB with URI:', mongoUri.replace(/:[^:]*@/, ':****@'));
         const client = new MongoClient(mongoUri);
         await client.connect();
+        console.log('Connected to MongoDB');
+
         const db = client.db('analyticsdb');
         const collection = db.collection('analytics');
 
-        const results = await collection.find({ userid }).toArray();
+        // Log the query we're about to make
+        console.log('Querying MongoDB for userid:', userid);
+        
+        // First, let's check what's in the collection
+        const allDocs = await collection.find({}).toArray();
+        console.log('All documents in collection:', allDocs);
+
+        // Now perform our actual query
+        const results = await collection.find({ userid: userid }).toArray();
+        console.log('Query results:', results);
+
         await client.close();
+        console.log('MongoDB connection closed');
 
         if (results.length === 0) {
+            console.log('No results found for userid:', userid);
             return res.status(404).json({
                 message: 'No results found for this user',
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                debug: {
+                    totalDocuments: allDocs.length,
+                    searchedUserId: userid
+                }
             });
         }
 

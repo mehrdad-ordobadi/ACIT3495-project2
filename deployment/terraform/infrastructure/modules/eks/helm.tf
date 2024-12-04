@@ -1,3 +1,4 @@
+# helm.tf
 resource "helm_release" "aws_load_balancer_controller" {
   name       = "aws-load-balancer-controller"
   repository = "https://aws.github.io/eks-charts"
@@ -41,6 +42,12 @@ resource "helm_release" "secrets_store_csi" {
   repository = "https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts"
   chart      = "secrets-store-csi-driver"
   namespace  = "kube-system"
+
+  set {
+    name  = "syncSecret.enabled"
+    value = "true"
+  }
+
   depends_on = [
     aws_eks_node_group.main,
     aws_eks_addon.coredns

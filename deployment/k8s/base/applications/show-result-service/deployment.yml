@@ -1,3 +1,4 @@
+# show-results-deployment.yml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -28,9 +29,8 @@ spec:
       - name: show-result-service
         image: mehrdadfordobadi/show-result-service:latest
         env:
-          # MongoDB connection (using service discovery)
-        - name: MONGO_URI
-          value: "mongodb://$(MONGO_USER_READER):$(MONGO_PASSWORD_READER)@mongodb.default.svc.cluster.local:27017/analyticsdb"
+        - name: MONGO_HOST
+          value: "mongodb-0.mongodb.default.svc.cluster.local"
         - name: MONGO_USER_READER
           valueFrom:
             secretKeyRef:
@@ -42,7 +42,7 @@ spec:
               name: mongodb-secrets
               key: MONGO_PASSWORD_READER
         - name: AUTH_SERVICE_HOST
-          value: http://auth-service.default.svc.cluster.local:8000
+          value: "auth-service.default.svc.cluster.local"
         - name: AUTH_SERVICE_PORT
           value: "8000"
         ports:
@@ -56,14 +56,17 @@ spec:
             memory: "128Mi"
         livenessProbe:
           httpGet:
-          path: /health
-          port: 8002
-          initialDelaySeconds: 15
-          periodSeconds: 10
+            path: /health
+            port: 8002
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          timeoutSeconds: 5
+          failureThreshold: 5
         readinessProbe:
           httpGet:
-          path: /health/ready
-          port: 8002
-          initialDelaySeconds: 5
-          periodSeconds: 10
-    
+            path: /health/ready
+            port: 8002
+          initialDelaySeconds: 60
+          periodSeconds: 15
+          timeoutSeconds: 5
+          failureThreshold: 3

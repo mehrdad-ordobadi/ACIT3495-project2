@@ -1,3 +1,4 @@
+# main.tf
 resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
   instance_tenancy     = "default"
@@ -15,13 +16,13 @@ resource "aws_subnet" "main" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = cidrsubnet(var.vpc_cidr, 8, count.index)
   availability_zone       = var.availability_zones[count.index % length(var.availability_zones)]
-  map_public_ip_on_launch = count.index % 3 == 0 ? true : false
+  map_public_ip_on_launch = count.index % 2 == 0 ? true : false  # Change to alternate between public/private
 
   tags = {
     Name                                           = "${var.project}-subnet-${count.index}"
     "kubernetes.io/cluster/${var.project}-cluster" = "shared"
-    "kubernetes.io/role/elb"                       = count.index % 3 == 0 ? "1" : null
-    "kubernetes.io/role/internal-elb"              = count.index % 3 != 0 ? "1" : null
+    "kubernetes.io/role/elb"                       = count.index % 2 == 0 ? "1" : null     # Tag every other subnet as public
+    "kubernetes.io/role/internal-elb"              = count.index % 2 != 0 ? "1" : null     # Tag every other subnet as private
   }
 }
 

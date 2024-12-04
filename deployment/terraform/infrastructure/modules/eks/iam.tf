@@ -1,6 +1,14 @@
 # iam.tf
 data "aws_caller_identity" "current" {}
 
+data "aws_secretsmanager_secret" "mysql" {
+  name = "mysql-credentials"
+}
+
+data "aws_secretsmanager_secret" "mongodb" {
+  name = "mongodb-credentials"
+}
+
 resource "aws_iam_role" "cluster" {
   name = "${var.project}-cluster-role"
 
@@ -107,6 +115,9 @@ resource "aws_iam_role_policy" "alb_controller" {
       {
         Effect = "Allow"
         Action = [
+          "ec2:CreateSecurityGroup",
+          "ec2:DeleteSecurityGroup",
+          "ec2:DescribeAvailabilityZones",
           "ec2:DescribeAccountAttributes",
           "ec2:DescribeAddresses",
           "ec2:DescribeInternetGateways",
@@ -116,9 +127,14 @@ resource "aws_iam_role_policy" "alb_controller" {
           "ec2:DescribeInstances",
           "ec2:DescribeNetworkInterfaces",
           "ec2:DescribeTags",
+          "ec2:CreateTags",         
+          "ec2:DeleteTags",
           "elasticloadbalancing:*",
           "ec2:AuthorizeSecurityGroupIngress",
-          "ec2:RevokeSecurityGroupIngress"
+          "ec2:RevokeSecurityGroupIngress",
+          "ec2:ModifySecurityGroupRules",
+          "ec2:CreateSecurityGroupRule",
+          "ec2:DeleteSecurityGroupRule" 
         ]
         Resource = "*"
       }
@@ -166,7 +182,8 @@ resource "aws_iam_role" "secrets_csi" {
       Action = "sts:AssumeRoleWithWebIdentity"
       Condition = {
         StringEquals = {
-          "${aws_iam_openid_connect_provider.main.url}:sub" : "system:serviceaccount:kube-system:secrets-store-csi-driver"
+          "${replace(aws_iam_openid_connect_provider.main.url, "https://", "")}:sub": "system:serviceaccount:default:database-secrets-sa",
+          "${replace(aws_iam_openid_connect_provider.main.url, "https://", "")}:aud": "sts.amazonaws.com"
         }
       }
     }]
@@ -188,8 +205,8 @@ resource "aws_iam_role_policy" "secrets_csi" {
           "secretsmanager:DescribeSecret"
         ]
         Resource = [
-          "arn:aws:secretsmanager:${var.region}:${data.aws_caller_identity.current.account_id}:secret:mysql-secrets-*",
-          "arn:aws:secretsmanager:${var.region}:${data.aws_caller_identity.current.account_id}:secret:mongodb-secrets-*"
+          data.aws_secretsmanager_secret.mysql.arn,
+          data.aws_secretsmanager_secret.mongodb.arn
         ]
       }
     ]

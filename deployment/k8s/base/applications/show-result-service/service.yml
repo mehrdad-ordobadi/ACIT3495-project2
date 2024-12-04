@@ -1,0 +1,15 @@
+# show-results-service.yml
+apiVersion: v1
+kind: Service
+metadata:
+  name: show-result-service
+  labels:
+    app: show-result-service
+spec:
+  type: ClusterIP
+  selector:
+    app: show-result-service
+  ports:
+    - port: 8002
+      targetPort: 8002
+      protocol: TCP

@@ -10,7 +10,10 @@ const port = process.env.ENTER_DATA_PORT || 8001;
 
 app.use(bodyParser.json());
 app.use(cors());
+
+// Serve static files at both root and /enter-data
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/enter-data', express.static(path.join(__dirname, 'public')));
 
 const dbConfig = {
     host: process.env.MYSQL_HOST || 'mysql',
@@ -18,6 +21,15 @@ const dbConfig = {
     password: process.env.MYSQL_PASSWORD || 'writerpassword',
     database: process.env.MYSQL_DATABASE || 'datadb'
 };
+
+// Serve index.html at both root and /enter-data
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/enter-data', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // Basic health check endpoint (liveness probe)
 app.get('/health', (req, res) => {
@@ -80,6 +92,11 @@ app.get('/service-info', (req, res) => {
             },
             {
                 path: '/enter-data',
+                method: 'GET',
+                description: 'Enter data frontend'
+            },
+            {
+                path: '/enter-data',
                 method: 'POST',
                 description: 'Enter numerical data for a user',
                 requestBody: {
@@ -103,6 +120,7 @@ app.get('/service-info', (req, res) => {
     });
 });
 
+// Handle data submission at both paths
 app.post('/enter-data', async (req, res) => {
     const { userid, password, value } = req.body;
 

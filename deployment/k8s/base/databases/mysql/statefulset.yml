@@ -70,11 +70,11 @@ spec:
           readOnly: true
         resources:
           requests:
-            cpu: "500m"
-            memory: "1Gi"
+            cpu: "200m"      # 20% of a CPU core
+            memory: "256Mi"  # 256MB initial request
           limits:
-            cpu: "1"
-            memory: "2Gi"
+            cpu: "500m"      # Max 50% of a CPU core
+            memory: "512Mi"  # Max 512MB memory
         livenessProbe:
           exec:
             command: ["mysqladmin", "ping", "-h", "localhost"]

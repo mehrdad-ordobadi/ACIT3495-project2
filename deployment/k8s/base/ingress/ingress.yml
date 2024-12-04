@@ -23,6 +23,6 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: show-results-service
+            name: show-result-service
             port:
               number: 8002

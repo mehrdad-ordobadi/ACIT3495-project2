@@ -5,7 +5,8 @@ metadata:
 spec:
   type: ClusterIP  # Internal service
   ports:
-  - port: 8080
-    targetPort: 8000
+    - protocol: TCP         
+      port: 8080           # Port exposed by the service
+      targetPort: 8000     # Port your container is listening on
   selector:
     app: analytical-service

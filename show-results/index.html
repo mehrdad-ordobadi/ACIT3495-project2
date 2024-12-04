@@ -49,23 +49,29 @@
                 });
 
                 const data = await response.json();
-                if (Array.isArray(data)) {
-                    const resultsHtml = data.map(result => `
-                        <h3>User: ${result.userid}</h3>
-                        <p>Max: ${result.max}</p>
-                        <p>Min: ${result.min}</p>
-                        <p>Average: ${result.avg.toFixed(2)}</p>
-                        <p>Count: ${result.count}</p>
-                    `).join('');
-                    document.getElementById('results').innerHTML = resultsHtml;
+                
+                if (response.ok) {
+                    if (data.results && data.results.length > 0) {
+                        const resultsHtml = data.results.map(result => `
+                            <h3>User: ${result.userid}</h3>
+                            <p>Max: ${result.max}</p>
+                            <p>Min: ${result.min}</p>
+                            <p>Average: ${result.avg.toFixed(2)}</p>
+                            <p>Count: ${result.count}</p>
+                            <p>Last Updated: ${new Date(result.last_updated * 1000).toLocaleString()}</p>
+                        `).join('');
+                        document.getElementById('results').innerHTML = resultsHtml;
+                    } else {
+                        document.getElementById('results').textContent = 'No results found';
+                    }
                 } else {
-                    document.getElementById('results').textContent = data.error || 'No results found';
+                    document.getElementById('results').textContent = data.error || data.message || 'Error retrieving results';
                 }
             } catch (error) {
-                document.getElementById('results').textContent = 'An error occurred';
+                console.error('Error:', error);
+                document.getElementById('results').textContent = 'An error occurred while fetching results';
             }
         });
     </script>
 </body>
 </html>
-
