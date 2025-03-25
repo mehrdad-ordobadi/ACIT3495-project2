@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytical-service
+  labels:
+    app: analytical-service
+    component: backend
+    environment: development
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: analytical-service
+  template:
+    metadata:
+      labels:
+        app: analytical-service
+    spec:
+      serviceAccountName: database-secrets-sa
+      volumes:
+      - name: secrets-store
+        csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: "database-secrets"
+      containers:
+      - name: analytical-service
+        image: mehrdadfordobadi/analytical-service:latest
+        volumeMounts:
+        - name: secrets-store
+          mountPath: "/mnt/secrets-store"
+          readOnly: true
+        env:
+          # MongoDB connection (using service discovery)
+        - name: MONGO_HOST
+          value: "mongodb-0.mongodb.default.svc.cluster.local"
+        - name: MONGO_USER_WRITER
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secrets
+              key: MONGO_USER_WRITER
+        - name: MONGO_PASSWORD_WRITER
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secrets
+              key: MONGO_PASSWORD_WRITER
+        - name: MONGO_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secrets
+              key: MONGO_INITDB_DATABASE
+          # MySQL connection
+        - name: MYSQL_HOST
+          value: "mysql-0.mysql.default.svc.cluster.local"
+        - name: MYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secrets
+              key: MYSQL_USER_READER
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secrets
+              key: MYSQL_PASSWORD_READER
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            memory: 512Mi
+            cpu: 500m
+          limits:
+            memory: 1Gi
+            cpu: 1000m
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 60  
+          periodSeconds: 15        
+          timeoutSeconds: 5       
+          failureThreshold: 5      
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 8080
+          initialDelaySeconds: 90 
+          periodSeconds: 15       
+          timeoutSeconds: 5       
+          failureThreshold: 5  

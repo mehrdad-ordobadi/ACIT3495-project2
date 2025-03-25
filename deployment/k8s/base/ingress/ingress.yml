@@ -1,0 +1,28 @@
+# k8s/base/ingress/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api-ingress
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+spec:
+  ingressClassName: alb
+  rules:
+  - http:
+      paths:
+      - path: /enter-data
+        pathType: Prefix
+        backend:
+          service:
+            name: enter-data-service
+            port:
+              number: 8001
+      - path: /results
+        pathType: Prefix
+        backend:
+          service:
+            name: show-result-service
+            port:
+              number: 8002

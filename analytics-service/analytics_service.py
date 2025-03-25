@@ -16,8 +16,15 @@ def get_mysql_connection():
         database=os.environ.get('MYSQL_DATABASE', 'datadb')
     )
 
+
 def get_mongodb_connection():
-    return MongoClient(os.environ.get('MONGO_URI', 'mongodb://writer:writerpassword@mongodb:27017/analyticsdb?authSource=analyticsdb'))
+    mongo_host = os.environ.get('MONGO_HOST', 'mongodb')
+    mongo_user = os.environ.get('MONGO_USER_WRITER', 'writer')
+    mongo_password = os.environ.get('MONGO_PASSWORD_WRITER', 'writerpassword')
+    mongo_database = os.environ.get('MONGO_DATABASE', 'analyticsdb')
+
+    mongo_uri = f'mongodb://{mongo_user}:{mongo_password}@{mongo_host}:27017/{mongo_database}?authSource={mongo_database}'
+    return MongoClient(mongo_uri)
 
 def mask_password(uri):
     """Helper function to mask passwords in URIs"""
@@ -144,6 +151,7 @@ if __name__ == "__main__":
     Thread(target=lambda: app.run(host='0.0.0.0', port=8080, debug=False)).start()
     
     # Run the analytics calculation loop
+    time.sleep(30) 
     while True:
         try:
             calculate_analytics()

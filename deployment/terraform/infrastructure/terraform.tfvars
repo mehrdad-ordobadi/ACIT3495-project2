@@ -1,0 +1,9 @@
+project            = "k8s"
+region             = "us-west-2"
+vpc_cidr           = "10.0.0.0/16"
+availability_zones = ["us-west-2a", "us-west-2b", "us-west-2c"]
+subnet_count       = 6
+cluster_version    = "1.31"
+desired_size       = 1
+min_size           = 0
+max_size           = 2

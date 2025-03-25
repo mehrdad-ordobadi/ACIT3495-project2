@@ -1,0 +1,72 @@
+# show-results-deployment.yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: show-result-service
+  labels:
+    app: show-result-service
+    component: frontend
+    environment: development
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: show-result-service
+  template:
+    metadata:
+      labels:
+        app: show-result-service
+    spec:
+      serviceAccountName: database-secrets-sa
+      volumes:
+      - name: secrets-store
+        csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: "database-secrets"
+      containers:
+      - name: show-result-service
+        image: mehrdadfordobadi/show-result-service:latest
+        env:
+        - name: MONGO_HOST
+          value: "mongodb-0.mongodb.default.svc.cluster.local"
+        - name: MONGO_USER_READER
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secrets
+              key: MONGO_USER_READER
+        - name: MONGO_PASSWORD_READER
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secrets
+              key: MONGO_PASSWORD_READER
+        - name: AUTH_SERVICE_HOST
+          value: "auth-service.default.svc.cluster.local"
+        - name: AUTH_SERVICE_PORT
+          value: "8000"
+        ports:
+        - containerPort: 8002
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+          limits:
+            cpu: "100m"
+            memory: "128Mi"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8002
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          timeoutSeconds: 5
+          failureThreshold: 5
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 8002
+          initialDelaySeconds: 60
+          periodSeconds: 15
+          timeoutSeconds: 5
+          failureThreshold: 3
