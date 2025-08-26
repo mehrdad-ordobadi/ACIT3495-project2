@@ -24,23 +24,45 @@ This is a student project designed for learning purposes and demonstrates core c
 
 The system implements a microservices architecture with the following components:
 
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Enter Data    │    │  Show Results   │    │ Authentication  │
-│   (Node.js)     │    │   (Node.js)     │    │   (Node.js)     │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-        │                       │                       │
-        └───────────────────────┼───────────────────────┘
-                                │
-                        ┌─────────────────┐
-                        │   Analytics     │
-                        │   (Python)      │
-                        └─────────────────┘
-                               │
-                 ┌──────────────┴──────────────┐
-            ┌────▼────┐                   ┌────▼────┐
-            │  MySQL  │                   │ MongoDB │
-            │   DB    │                   │   DB    │
-            └─────────┘                   └─────────┘
+                    ┌─────────────────────────────────────────────────────────┐
+                    │                    AWS EKS Cluster                      │
+                    │                                                         │
+                    │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐      │
+                    │  │ Enter Data  │  │Show Results │  │    Auth     │      │
+                    │  │ (Node.js)   │  │ (Node.js)   │  │ (Node.js)   │      │
+                    │  │   :8001     │  │   :8002     │  │   :8000     │      │
+                    │  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘      │
+                    │         │                │                │             │
+                    │         └────────────────┼────────────────┘             │
+                    │                          │                              │
+                    │              ┌─────────────────┐                        │
+                    │              │   Analytics     │                        │
+                    │              │   (Python)      │                        │
+                    │              │     :8080       │                        │
+                    │              └─────────┬───────┘                        │
+                    │                        │                                │
+                    │         ┌──────────────┼──────────────┐                 │
+                    │         │              │              │                 │
+                    │    ┌────▼────┐                   ┌────▼────┐            │
+                    │    │  MySQL  │                   │ MongoDB │            │
+                    │    │  :3306  │                   │ :27017  │            │
+                    │    └─────────┘                   └─────────┘            │
+                    │                                                         │
+                    └─────────────────────────────────────────────────────────┘
+                                             │
+                                    ┌────────▼────────┐
+                                    │  AWS ALB        │
+                                    │  (Load Balancer)│
+                                    └────────┬────────┘
+                                             │
+                                        ┌────▼────┐
+                                        │ Internet│
+                                        └─────────┘
+
+Data Flow:
+1. Users → ALB → Enter Data Service → Auth Service → MySQL
+2. Analytics Service → MySQL → MongoDB (periodic processing)  
+3. Users → ALB → Show Results Service → Auth Service → MongoDB
 
 ### 2.1. Service Responsibilities
 
