@@ -36,7 +36,7 @@ The system implements a microservices architecture with the following components
                         │   (Python)      │
                         └─────────────────┘
                                │
-                ┌──────────────┴──────────────┐
+                 ┌──────────────┴──────────────┐
             ┌────▼────┐                   ┌────▼────┐
             │  MySQL  │                   │ MongoDB │
             │   DB    │                   │   DB    │
@@ -131,6 +131,8 @@ Access the services:
 │   ├── k8s/                      # Kubernetes manifests
 │   │   ├── base/applications/    # Application deployments
 │   │   ├── base/databases/       # Database StatefulSets
+|   |   ├── base/ingress/         # Load balancer configs
+|   |   ├── base/storage/         # Storage manifests
 │   │   ├── base/configmaps/      # Configuration management
 │   │   └── base/secrets/         # Secret management
 │   └── terraform/                # Infrastructure as Code
