@@ -42,7 +42,7 @@ The system implements a microservices architecture with the following components
                     │              └─────────┬───────┘                        │
                     │                        │                                │
                     │         ┌──────────────┼──────────────┐                 │
-                    │         │              │              │                 │
+                    │         │                             │                 │
                     │    ┌────▼────┐                   ┌────▼────┐            │
                     │    │  MySQL  │                   │ MongoDB │            │
                     │    │  :3306  │                   │ :27017  │            │
