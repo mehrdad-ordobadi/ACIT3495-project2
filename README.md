@@ -1,94 +1,183 @@
-# Microservices Data Analytics Application
+# Microservices Data Analytics Platform
 
-This application consists of several microservices that work together to authenticate users, enter data, and show analytics results.
+A containerized microservices system for data collection and analytics, demonstrating modern cloud-native architecture with Kubernetes deployment on AWS EKS.
 
-## Services
+![Kubernetes](https://img.shields.io/badge/kubernetes-%23326ce5.svg?style=for-the-badge&logo=kubernetes&logoColor=white)
+![AWS](https://img.shields.io/badge/AWS-%23FF9900.svg?style=for-the-badge&logo=amazon-aws&logoColor=white)
+![Terraform](https://img.shields.io/badge/terraform-%235835CC.svg?style=for-the-badge&logo=terraform&logoColor=white)
+![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 
-1. Authentication Service (Port 8000)
-2. Enter Data Service (Port 8001)
-3. Show Results Service (Port 8002)
-4. Analytics Service (Internal)
-5. MySQL Database
-6. MongoDB Database
+## 1. Key Learning Outcomes
 
-## Building and Running
+This project demonstrates:
 
-To build and run the application:
+* Microservices Design Patterns: Service decomposition and communication
+* Container Orchestration: Kubernetes deployment and management
+* Cloud Infrastructure: AWS EKS, networking, and security
+* Infrastructure as Code: Terraform for reproducible infrastructure
+
+### 1.1 Note
+
+This is a student project designed for learning purposes and demonstrates core concepts of microservices architecture and Kubernetes deployment. For production use, additional security hardening, monitoring, and error handling would be recommended.
+
+## 2. Architecture Overview
+
+The system implements a microservices architecture with the following components:
+
+                    ┌─────────────────────────────────────────────────────────┐
+                    │                    AWS EKS Cluster                      │
+                    │                                                         │
+                    │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐      │
+                    │  │ Enter Data  │  │Show Results │  │    Auth     │      │
+                    │  │ (Node.js)   │  │ (Node.js)   │  │ (Node.js)   │      │
+                    │  │   :8001     │  │   :8002     │  │   :8000     │      │
+                    │  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘      │
+                    │         │                │                │             │
+                    │         └────────────────┼────────────────┘             │
+                    │                          │                              │
+                    │              ┌─────────────────┐                        │
+                    │              │   Analytics     │                        │
+                    │              │   (Python)      │                        │
+                    │              │     :8080       │                        │
+                    │              └─────────┬───────┘                        │
+                    │                        │                                │
+                    │         ┌──────────────┼──────────────┐                 │
+                    │         │                             │                 │
+                    │    ┌────▼────┐                   ┌────▼────┐            │
+                    │    │  MySQL  │                   │ MongoDB │            │
+                    │    │  :3306  │                   │ :27017  │            │
+                    │    └─────────┘                   └─────────┘            │
+                    │                                                         │
+                    └─────────────────────────────────────────────────────────┘
+                                             │
+                                    ┌────────▼────────┐
+                                    │  AWS ALB        │
+                                    │  (Load Balancer)│
+                                    └────────┬────────┘
+                                             │
+                                        ┌────▼────┐
+                                        │ Internet│
+                                        └─────────┘
+
+Data Flow:
+1. Users → ALB → Enter Data Service → Auth Service → MySQL
+2. Analytics Service → MySQL → MongoDB (periodic processing)  
+3. Users → ALB → Show Results Service → Auth Service → MongoDB
+
+### 2.1. Service Responsibilities
+
+- **Enter Data Service**: Web application for authenticated data collection, writes to MySQL
+- **Show Results Service**: Web application for displaying analytics, reads from MongoDB  
+- **Authentication Service**: Validates user credentials across all services
+- **Analytics Service**: Processes data from MySQL and stores aggregated results in MongoDB
+- **MySQL Database**: Primary data storage for raw user inputs
+- **MongoDB Database**: Analytics data storage for processed results
+
+## 3. Technology Stack
+
+- **Container Orchestration**: Kubernetes, Helm Charts
+- **Cloud Infrastructure**: AWS EKS, VPC, ALB
+- **Infrastructure as Code**: Terraform
+- **Programming Languages**: Node.js, Python
+- **Databases**: MySQL 8.0, MongoDB
+- **Security**: AWS Secrets Manager, IAM Roles, CSI Secret Store Driver
+- **Monitoring**: Kubernetes health checks, HPA autoscaling
+
+## 4. Features
+
+- **Microservices Architecture**: Loosely coupled services with dedicated responsibilities
+- **Cloud-Native Deployment**: Production-ready Kubernetes manifests with auto-scaling
+- **Infrastructure Automation**: Complete AWS infrastructure provisioning with Terraform
+- **Security Integration**: AWS Secrets Manager for secure credential management
+- **Health Monitoring**: Comprehensive liveness and readiness probes
+- **Auto-scaling**: Horizontal Pod Autoscaler based on CPU utilization
+- **Load Balancing**: AWS Application Load Balancer with Ingress controller
+
+## 5. Prerequisites
+
+- AWS CLI configured with appropriate permissions
+- kubectl installed and configured
+- Terraform >= 1.0
+- Docker (for local development)
+
+## 6. Deployment
+
+### 6.1. Infrastructure Setup
+
+Deploy the EKS cluster and supporting AWS resources:
 
 ```bash
-docker-compose up --build
+cd deployment/terraform/infrastructure
+terraform init
+terraform plan
+terraform apply
+```
+### 6.2. Configure kubectl
+
+Run the following command to update the kubectl context:
+
+```
+aws eks update-kubeconfig --region us-west-2 --name k8s-cluster
 ```
 
-## Testing the Services
+### 6.3. Deploy Application
 
-### 1. Authentication Service
+Run the following commands to deploy application on the cluster:
 
-The authentication service validates user credentials and is used internally by other services..
-
-#### User 1:
-
-```bash
-curl -X POST http://localhost:8000/validate \
--H "Content-Type: application/json" \
--d '{"userid": "user1", "password": "password1"}'
+```
+cd deployment/k8s
+kubectl apply -k .
 ```
 
-Expected output:
+## 7. Access the application
 
-```json
-{"message":"Authentication successful","userid":"user1"}
+Get the load balancer URL:
+
+```
+kubectl get ingress api-ingress
 ```
 
-### 2. Enter Data Service
+Access the services:
 
-The enter data service allows authenticated users to input numerical data.
+* Enter Data: http://<ALB-URL>/enter-data
+* Show Results: http://<ALB-URL>/results
 
-Access the GUI at: http://localhost:8001
+## 8. Project Structure
 
-You can also use the API directly:
+├── services/
+│   ├── authentication-service/    # Node.js authentication service
+│   ├── analytics-service/         # Python analytics processor
+│   ├── enter-data/               # Node.js data collection web app
+│   └── show-results/             # Node.js results display web app
+├── deployment/
+│   ├── k8s/                      # Kubernetes manifests
+│   │   ├── base/applications/    # Application deployments
+│   │   ├── base/databases/       # Database StatefulSets
+|   |   ├── base/ingress/         # Load balancer configs
+|   |   ├── base/storage/         # Storage manifests
+│   │   ├── base/configmaps/      # Configuration management
+│   │   └── base/secrets/         # Secret management
+│   └── terraform/                # Infrastructure as Code
+│       └── infrastructure/       # EKS cluster and VPC
+└── docs/                         # Additional documentation
 
-```bash
-curl -X POST http://localhost:8001/enter-data \
--H "Content-Type: application/json" \
--d '{"userid": "user1", "password": "password1", "value": 42.5}'
-```
+## 9. Security Features
 
-Expected output:
+* IAM Integration: Service accounts with AWS IAM roles
+* Secrets Management: AWS Secrets Manager with CSI driver
+* Network Security: Security groups and network policies
+* Container Security: Non-root containers with resource limits
 
-```json
-{"message":"Data entered successfully"}
-```
+## 10. Default Users
 
-### 3. Show Results Service
+The system includes two test users:
 
-The show results service displays analytics results for authenticated users.
+* user1 / password1
+* user2 / password2
 
-Access the GUI at: http://localhost:8002
+## 11. License
 
-You can also use the API directly:
+This project is available under the MIT License.
 
-```bash
-curl -X POST http://localhost:8002/results \
--H "Content-Type: application/json" \
--d '{"userid": "user1", "password": "password1"}'
-```
 
-Example output:
 
-```json
-[
-    {
-        "userid": "user1",
-        "max": 42.5,
-        "min": 42.5,
-        "avg": 42.5,
-        "count": 1
-    }
-]
-```
-
-## Notes
-
-- The analytics service runs periodically to calculate statistics for each user's data.
-- Results shown are examples and may vary based on the actual data entered.
-- In a production environment, ensure proper security measures are implemented, including secure password storage and HTTPS.
