@@ -75,7 +75,7 @@ spec:
         livenessProbe:
           httpGet:
             path: /health
-            port: 8080
+            port: 8000  # must match container port
           initialDelaySeconds: 60  
           periodSeconds: 15        
           timeoutSeconds: 5       
@@ -83,7 +83,7 @@ spec:
         readinessProbe:
           httpGet:
             path: /health/ready
-            port: 8080
+            port: 8000
           initialDelaySeconds: 90 
           periodSeconds: 15       
           timeoutSeconds: 5       
