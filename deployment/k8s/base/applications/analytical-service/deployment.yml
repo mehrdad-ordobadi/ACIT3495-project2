@@ -64,7 +64,7 @@ spec:
               name: mysql-secrets
               key: MYSQL_PASSWORD_READER
         ports:
-        - containerPort: 8000
+        - containerPort: 8080
         resources:
           requests:
             memory: 512Mi
@@ -75,7 +75,7 @@ spec:
         livenessProbe:
           httpGet:
             path: /health
-            port: 8000  # must match container port
+            port: 8080  # must match container port
           initialDelaySeconds: 60  
           periodSeconds: 15        
           timeoutSeconds: 5       
@@ -83,7 +83,7 @@ spec:
         readinessProbe:
           httpGet:
             path: /health/ready
-            port: 8000
+            port: 8080
           initialDelaySeconds: 90 
           periodSeconds: 15       
           timeoutSeconds: 5       
