@@ -21,7 +21,6 @@ jobs:
             echo $dir
           done
           echo "We are going to build these next!"
-          
 
 
 
