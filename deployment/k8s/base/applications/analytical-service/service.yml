@@ -7,6 +7,6 @@ spec:
   ports:
     - protocol: TCP         
       port: 8080           # Port exposed by the service
-      targetPort: 8000     # Port your container is listening on
+      targetPort: 8080     # Port your container is listening on
   selector:
     app: analytical-service
