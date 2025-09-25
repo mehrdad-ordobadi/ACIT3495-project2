@@ -1,0 +1,45 @@
+name: Building
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: mac2-runner
+    steps:
+      - name: check changes
+        run: |
+          echo "Current directory is:"
+          pwd
+          CHANGED=$(git diff --name-only HEAD~1..HEAD -- services/ | cut -d'/' -f2 | sort | uniq)
+          echo "Changes have been detected in directories:"
+          for dir in $CHANGED; do
+            echo $dir
+          done
+          echo "We are going to build these next!"
+          
+
+
+
+
+# permissions:
+#   id-token: write
+#   contents: read  
+
+# jobs:
+#     test:
+#       runs-on: ubuntu-latest
+#       steps:
+#         - name: Configure AWS Credentials for China region audience
+#           uses: aws-actions/configure-aws-credentials@v4
+#           with:
+#             role-to-assume: arn:aws:iam::746706907394:role/github-oidc
+#             aws-region: us-west-2
+
+#         - name: List the buckets
+#           run: aws s3 ls
+
