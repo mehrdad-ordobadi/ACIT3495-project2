@@ -11,6 +11,10 @@ jobs:
   build:
     runs-on: mac2-runner
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
       - name: check changes
         run: |
           echo "Current directory is:"
@@ -21,6 +25,20 @@ jobs:
             echo $dir
           done
           echo "We are going to build these next!"
+  
+  clean-up:
+    runs-on: mac2-runner
+    steps:
+      - name: clear-runner
+        run: |
+          echo "===>Current directory<==="
+          echo "===>The content of the current directory<==="
+          ls -al
+          echo "===>docker containers<==="
+          docker ps -a
+          echo "===>docker images<==="
+          docker images
+          echo "BYE!"
 
 
 
