@@ -32,6 +32,7 @@ jobs:
       - name: clear-runner
         run: |
           echo "===>Current directory<==="
+          pwd
           echo "===>The content of the current directory<==="
           ls -al
           echo "===>docker containers<==="
